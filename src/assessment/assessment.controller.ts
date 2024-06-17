@@ -1,0 +1,128 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { Types } from 'mongoose';
+import { AIService } from '../ai/ai.service';
+import {
+  createCodingQuestionPrompt,
+  createMcqQuestionsPrompt,
+} from '../ai/prompts/assessmentPrompt';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { RolesGuard } from '../auth/guards/role.guard';
+import { User as UserSchema } from '../database/schema/user.schema';
+import { User } from '../decorators/user.decorator';
+import { AssessmentService } from './assessment.service';
+import { CreateAssessmentDto } from './dto/create-assessment.dto';
+import { UpdateAssessmentDto } from './dto/update-assessment.dto';
+
+@ApiTags('Assessments')
+@Controller('assessment')
+export class AssessmentController {
+  constructor(
+    private readonly assessmentService: AssessmentService,
+    private readonly aiService: AIService,
+  ) {}
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get()
+  async findAll(@User() user: UserSchema | any) {
+    return await this.assessmentService.findAll({
+      user: new Types.ObjectId(user._id),
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return await this.assessmentService.findById(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Post()
+  async create(
+    @User('_id') userId,
+    @Body() createAssessmentDto: CreateAssessmentDto,
+  ) {
+    const assessment = await this.assessmentService.create({
+      ...createAssessmentDto,
+      createdBy: userId,
+    });
+
+    let assessmentQuestions = [];
+    if (createAssessmentDto.type === 'CODING') {
+      const assessmentPrompt = createCodingQuestionPrompt(assessment);
+      const generatedTest = await this.aiService.getOpenAiResponse(
+        assessmentPrompt,
+      );
+
+      const parsedContent = JSON.parse(generatedTest);
+      const requestedQuestions = parsedContent.questions.slice(
+        0,
+        createAssessmentDto.totalQuestions,
+      );
+      const codingQuestions = requestedQuestions?.map((question: any) => ({
+        ...question,
+        type: 'CODING',
+        assessmentId: assessment._id,
+      }));
+
+      assessmentQuestions = codingQuestions;
+    } else if (createAssessmentDto.type === 'MCQ') {
+      const assessmentPrompt = createMcqQuestionsPrompt(assessment);
+      const generatedTest = await this.aiService.getOpenAiResponse(
+        assessmentPrompt,
+      );
+      const parsedContent = JSON.parse(generatedTest);
+      const requestedQuestions = parsedContent.questions.slice(
+        0,
+        createAssessmentDto.totalQuestions,
+      );
+      const mcqQuestions = requestedQuestions?.map((question: any) => ({
+        ...question,
+        type: 'MCQ',
+        assessmentId: assessment._id,
+      }));
+
+      assessmentQuestions = mcqQuestions;
+    }
+
+    console.log(assessmentQuestions);
+    const questions =
+      await this.assessmentService.bulkCreateAssessmentQuestions(
+        assessmentQuestions,
+      );
+
+    return {
+      assessment: assessment._doc,
+      questions,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Put(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateAssessmentDto: UpdateAssessmentDto,
+  ) {
+    const updatedAssessment = await this.assessmentService.update(
+      id,
+      updateAssessmentDto,
+    );
+
+    return updatedAssessment;
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    return await this.assessmentService.delete(id);
+  }
+}
