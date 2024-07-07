@@ -20,6 +20,7 @@ import { RolesGuard } from '../auth/guards/role.guard';
 import { User as UserSchema } from '../database/schema/user.schema';
 import { User } from '../decorators/user.decorator';
 import { AssessmentService } from './assessment.service';
+import { AssessmentDto } from './dto/assessment.dto';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 
@@ -33,7 +34,7 @@ export class AssessmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
-  async findAll(@User() user: UserSchema | any) {
+  async findAll(@User() user: UserSchema | any): Promise<AssessmentDto[]> {
     return await this.assessmentService.findAll({
       user: new Types.ObjectId(user._id),
     });
@@ -41,7 +42,7 @@ export class AssessmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string): Promise<AssessmentDto> {
     return await this.assessmentService.findById(id);
   }
 
@@ -110,7 +111,7 @@ export class AssessmentController {
   @Put(':id')
   async update(
     @Param('id') id: string,
-    @Body() updateAssessmentDto: UpdateAssessmentDto,
+    @Body() updateAssessmentDto: CreateAssessmentDto,
   ) {
     const updatedAssessment = await this.assessmentService.update(
       id,

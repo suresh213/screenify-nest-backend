@@ -30,7 +30,7 @@ const bootstrap = async () => {
     .setVersion('1.0')
     .build();
 
-    await setupRedoc(app);
+  await setupRedoc(app);
 
   await app.listen(PORT);
 

@@ -115,10 +115,6 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@User() user: UserSchema) {
-    await this.usersService.updateByCondition(
-      { _id: user._id },
-      { isPresent: true },
-    );
     const accessToken = this.authService.getAccessToken(user.id);
     return { user, accessToken };
   }
