@@ -7,6 +7,10 @@ export class AssessmentDto {
 
   @IsString()
   @IsNotEmpty()
+  description: string;
+
+  @IsString()
+  @IsNotEmpty()
   role: string;
 
   @IsNumber()

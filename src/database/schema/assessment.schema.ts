@@ -10,6 +10,9 @@ export class Assessment {
   name: string;
 
   @Prop({ type: String, required: true })
+  description: string;
+
+  @Prop({ type: String, required: true })
   role: string;
 
   @Prop({ type: String, required: true })
