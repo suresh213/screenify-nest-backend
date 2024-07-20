@@ -23,6 +23,7 @@ import { User } from '../decorators/user.decorator';
 import { AssessmentService } from './assessment.service';
 import { AssessmentDto } from './dto/assessment.dto';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
+import { AssessmentQuestionDto } from './dto/assessment-question.dto';
 
 @ApiTags('Assessments')
 @Controller('assessment')
@@ -44,10 +45,13 @@ export class AssessmentController {
   @Get('questions/:assessmentId')
   async findAllQuestions(
     @Param('assessmentId') assessmentId: string,
-  ): Promise<AssessmentQuestion[] | any> {
-    return await this.assessmentService.findAllAssessmentQuestions({
-      assessment: new Types.ObjectId(assessmentId),
-    });
+  ): Promise<AssessmentQuestionDto[]> {
+    const questions: any =
+      await this.assessmentService.findAllAssessmentQuestions({
+        assessment: new Types.ObjectId(assessmentId),
+      });
+
+    return questions;
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
