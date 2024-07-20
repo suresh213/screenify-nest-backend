@@ -17,12 +17,12 @@ import {
 } from '../ai/prompts/assessmentPrompt';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/role.guard';
+import { AssessmentQuestion } from '../database/schema/assessmentQuestion.schema';
 import { User as UserSchema } from '../database/schema/user.schema';
 import { User } from '../decorators/user.decorator';
 import { AssessmentService } from './assessment.service';
 import { AssessmentDto } from './dto/assessment.dto';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
-import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 
 @ApiTags('Assessments')
 @Controller('assessment')
@@ -36,7 +36,17 @@ export class AssessmentController {
   @Get()
   async findAll(@User() user: UserSchema | any): Promise<AssessmentDto[]> {
     return await this.assessmentService.findAll({
-      user: new Types.ObjectId(user._id),
+      createdBy: new Types.ObjectId(user._id),
+    });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('questions/:assessmentId')
+  async findAllQuestions(
+    @Param('assessmentId') assessmentId: string,
+  ): Promise<AssessmentQuestion[] | any> {
+    return await this.assessmentService.findAllAssessmentQuestions({
+      assessment: new Types.ObjectId(assessmentId),
     });
   }
 
@@ -57,6 +67,8 @@ export class AssessmentController {
       createdBy: userId,
     });
 
+    console.log(assessment);
+
     let assessmentQuestions = [];
     if (createAssessmentDto.type === 'CODING') {
       const assessmentPrompt = createCodingQuestionPrompt(assessment);
@@ -65,14 +77,14 @@ export class AssessmentController {
       );
 
       const parsedContent = JSON.parse(generatedTest);
-      const requestedQuestions = parsedContent.questions.slice(
+      const requestedQuestions = parsedContent?.questions?.slice(
         0,
         createAssessmentDto.totalQuestions,
       );
       const codingQuestions = requestedQuestions?.map((question: any) => ({
         ...question,
         type: 'CODING',
-        assessmentId: assessment._id,
+        assessment: assessment._id,
       }));
 
       assessmentQuestions = codingQuestions;
@@ -82,24 +94,26 @@ export class AssessmentController {
         assessmentPrompt,
       );
       const parsedContent = JSON.parse(generatedTest);
-      const requestedQuestions = parsedContent.questions.slice(
+      const requestedQuestions = parsedContent?.questions?.slice(
         0,
         createAssessmentDto.totalQuestions,
       );
       const mcqQuestions = requestedQuestions?.map((question: any) => ({
         ...question,
         type: 'MCQ',
-        assessmentId: assessment._id,
+        assessment: assessment._id,
       }));
 
       assessmentQuestions = mcqQuestions;
     }
 
     console.log(assessmentQuestions);
+
     const questions =
       await this.assessmentService.bulkCreateAssessmentQuestions(
         assessmentQuestions,
       );
+    console.log(questions);
 
     return {
       assessment: assessment._doc,

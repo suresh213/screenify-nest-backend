@@ -20,14 +20,14 @@ export class AssessmentService {
     return await this.assessmentModel
       .find(condition)
       .select(excludeAssessmentProps)
-      .populate('user')
+      .populate('createdBy')
       .exec();
   }
 
   async findById(id: string): Promise<any> {
     const assessment = await this.assessmentModel
       .findById(id)
-      .populate('user')
+      .populate('createdBy')
       .select(excludeAssessmentProps)
       .exec();
 
@@ -44,7 +44,7 @@ export class AssessmentService {
   async findByCondition(condition: any): Promise<any> {
     return await this.assessmentModel
       .findOne(condition)
-      .populate('user')
+      .populate('createdBy')
       .select(excludeAssessmentProps)
       .exec();
   }

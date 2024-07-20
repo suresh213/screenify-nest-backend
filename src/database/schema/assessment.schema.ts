@@ -30,7 +30,7 @@ export class Assessment {
   @Prop({ type: JSON, required: true })
   settings: JSON;
 
-  @Prop({ type: Types.ObjectId, required: true })
+  @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
   createdBy: User;
 
   @Prop({ type: Date })

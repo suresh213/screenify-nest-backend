@@ -14,10 +14,14 @@ export function createCodingQuestionPrompt(assessment: any) {
   const prompt = `Create a coding test for ${assessment.role} users with ${assessment.experience} years of experience. The test should have ${assessment.totalQuestions} questions of difficulty level ${assessment.difficulty}. An example question could be:
   
     {
-      questionTitle: 'Sum of Even Digits',
-      questionDescription:
+      title: 'Sum of Even Digits',
+      description:
         'Write a function sum_of_even_digits that takes in an integer n and returns the sum of all even digits in the number. If the input number is negative, consider its absolute value.',
-      functionSignature: 'function sum_of_even_digits(n) { }',
+      "functionSignature": {
+          "c++": "int sumOfEvenDigits(int n);",
+          "java": "public int sumOfEvenDigits(int n);",
+          "javascript": "function sumOfEvenDigits(n) { }"
+      },
       example: [
         { input: 1234, output: 6 },
         { input: 987654321, output: 20 },
@@ -32,7 +36,7 @@ export function createCodingQuestionPrompt(assessment: any) {
       ],
     },
   
-    Each question should contain a questionTitle, questionDescription, example, testCases, solution keys. The test should be in JSON format without any parsing errors.`;
+    Each question should contain a title, description, functionSignature, example, testCases, solution keys. The test should be in JSON format without any parsing errors.`;
   return prompt;
 
   // solution:

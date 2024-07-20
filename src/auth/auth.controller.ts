@@ -3,24 +3,25 @@ import {
   Controller,
   Get,
   HttpCode,
-  Post,
-  UseGuards,
   HttpException,
   HttpStatus,
   Patch,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { User as UserSchema } from '../database/schema/user.schema';
 import { User } from '../decorators/user.decorator';
 import { MailService } from '../mail/mail.service';
+import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
+import { AuthResponseDto } from './dto/auth-response.dto';
 import { GoogleAuthDto } from './dto/google-auth-dto';
+import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SendMagicLinkDto } from './dto/send-magic-link-dto';
 import { VerifyMagicLinkDto } from './dto/verify-magic-link-dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
-import { LocalAuthGuard } from './guards/local.guard';
-import { ApiTags } from '@nestjs/swagger';
-import { UserService } from '../user/user.service';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -110,12 +111,16 @@ export class AuthController {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
-
-  @HttpCode(200)
-  @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@User() user: UserSchema) {
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+    const user = await this.authService.getUser(
+      loginDto.email,
+      loginDto.password,
+    );
+
     const accessToken = this.authService.getAccessToken(user.id);
+
     return { user, accessToken };
   }
 
