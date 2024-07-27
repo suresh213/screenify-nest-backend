@@ -39,7 +39,7 @@ export class MailService {
       });
     } catch (err) {
       console.log(err);
-      throw new HttpException('Error in Sending mail', err.statusCode);
+      console.log('Error in Sending mail', err.statusCode);
     }
   }
 

@@ -71,8 +71,6 @@ export class AssessmentController {
       createdBy: userId,
     });
 
-    console.log(assessment);
-
     let assessmentQuestions = [];
     if (createAssessmentDto.type === 'CODING') {
       const assessmentPrompt = createCodingQuestionPrompt(assessment);

@@ -3,13 +3,15 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Param,
   Post,
   Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Types } from 'mongoose';
 import { AssessmentService } from '../assessment/assessment.service';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
@@ -20,6 +22,7 @@ import { MailService } from '../mail/mail.service';
 import { CandidateService } from './candidate.service';
 import { CreateCandidateDto } from './dto/create-candidate.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
+import { CandidateAssessment } from '../database/schema/candidateAssessment.schema';
 
 @ApiTags('Candidates')
 @Controller('candidate')
@@ -32,35 +35,64 @@ export class CandidateController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get()
-  async findAll(@User() user: UserSchema | any) {
+  async findAll(
+    @User() user: UserSchema | any,
+    @Query('assessment') assessment?: string,
+    @Query('isCompleted') isCompleted?: boolean,
+    @Query('email') email?: string,
+  ): Promise<CandidateAssessment[]> {
     return await this.candidateService.findAll({
-      user: new Types.ObjectId(user._id),
+      invitedBy: new Types.ObjectId(user._id),
+      ...(assessment && { assessment: new Types.ObjectId(assessment) }),
+      ...(isCompleted && { isCompleted }),
+      ...(email && { email }),
     });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string): Promise<CandidateAssessment> {
     return await this.candidateService.findById(id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
-  async create(@Body() createCandidateDto: CreateCandidateDto) {
+  async create(
+    @Body() createCandidateDto: CreateCandidateDto,
+  ): Promise<CandidateAssessment> {
     return await this.candidateService.create(createCandidateDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post('invite')
-  async invite(@Body() createCandidateDto: CreateCandidateDto) {
-    const invitedCandidate = await this.candidateService.create(
-      createCandidateDto,
-    );
+  async invite(
+    @User() user: UserSchema | any,
+    @Body() createCandidateDto: CreateCandidateDto,
+  ): Promise<CandidateAssessment> {
+    const candidate = await this.candidateService.findByCondition({
+      email: createCandidateDto.email,
+      assessment: new Types.ObjectId(createCandidateDto.assessment),
+    });
 
-    await this.mailService.assessmentInvite(
+    if (candidate) {
+      throw new HttpException(
+        'Candidate already invited',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const invitedCandidate = await this.candidateService.create({
+      ...createCandidateDto,
+      assessment: new Types.ObjectId(createCandidateDto.assessment),
+      invitedBy: new Types.ObjectId(user._id),
+    });
+
+    this.mailService.assessmentInvite(
       createCandidateDto.email,
       createCandidateDto.assessment,
     );
+
+    return invitedCandidate;
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -85,14 +117,14 @@ export class CandidateController {
     return { assessment, assessmentQuestions };
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateCandidateDto: UpdateCandidateDto,
-  ) {
-    return await this.candidateService.update(id, updateCandidateDto);
-  }
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Put(':id')
+  // async update(
+  //   @Param('id') id: string,
+  //   @Body() updateCandidateDto: CandidateAssessment,
+  // ): Promise<CandidateAssessment> {
+  //   return await this.candidateService.update(id, updateCandidateDto);
+  // }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Delete(':id')

@@ -17,14 +17,14 @@ export class CandidateService {
     return await this.candidateModel
       .find(condition)
       .select(excludeCandidateProps)
-      .populate('user')
+      .populate('invitedBy')
       .exec();
   }
 
   async findById(id: string): Promise<any> {
     const assessment = await this.candidateModel
       .findById(id)
-      .populate('user')
+      .populate('invitedBy')
       .select(excludeCandidateProps)
       .exec();
 
@@ -41,12 +41,11 @@ export class CandidateService {
   async findByCondition(condition: any): Promise<any> {
     return await this.candidateModel
       .findOne(condition)
-      .populate('user')
       .select(excludeCandidateProps)
       .exec();
   }
 
-  async create(createCandidateDto: CreateCandidateDto): Promise<any> {
+  async create(createCandidateDto: CreateCandidateDto | any): Promise<any> {
     return await this.candidateModel.create(createCandidateDto);
   }
 
