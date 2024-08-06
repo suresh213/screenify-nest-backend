@@ -7,5 +7,8 @@ export class CreateCandidateDto {
 
   @IsNotEmpty()
   @IsString()
-  assessment: string;
+  name: string;
+
+  @IsString()
+  mobileNumber: string;
 }

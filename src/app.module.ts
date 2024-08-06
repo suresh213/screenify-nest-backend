@@ -8,6 +8,7 @@ import { StorageService } from './storage/storage.service';
 import { UserModule } from './user/user.module';
 import { AIModule } from './ai/ai.module';
 import { CandidateModule } from './candidate/candidate.module';
+import { CandidateAssessmentModule } from './candidateAssessment/candidateAssessment.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { CandidateModule } from './candidate/candidate.module';
     AuthModule,
     AssessmentModule,
     AIModule,
-    CandidateModule
+    CandidateModule,
+    CandidateAssessmentModule,
   ],
   controllers: [],
   providers: [StorageService],

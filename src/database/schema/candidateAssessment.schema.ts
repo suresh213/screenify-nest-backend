@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { Assessment } from './assessment.schema';
+import { Candidate } from './candidate.schema';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from './user.schema';
 
@@ -8,10 +9,6 @@ export type CandidateAssessmentDocument = CandidateAssessment & Document;
 
 @Schema({ timestamps: true })
 export class CandidateAssessment {
-  @ApiProperty({ description: 'The candidate email' })
-  @Prop({ type: String, required: true })
-  email: string;
-
   @ApiProperty({ description: 'The assessment identifier' })
   @Prop({
     type: Types.ObjectId,
@@ -19,6 +16,14 @@ export class CandidateAssessment {
     required: true,
   })
   assessment: Assessment;
+
+  @ApiProperty({ description: 'The candidate identifier' })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Candidate',
+    required: true,
+  })
+  candidate: Candidate;
 
   @ApiProperty({ description: 'Candidate Invited by' })
   @Prop({
