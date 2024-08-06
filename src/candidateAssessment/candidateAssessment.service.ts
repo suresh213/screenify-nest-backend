@@ -27,6 +27,8 @@ export class CandidateAssessmentService {
     const assessment = await this.candidateAssessmentModel
       .findById(id)
       .populate('invitedBy')
+      .populate('candidate')
+      .populate('assessment')
       .select(excludeCandidateProps)
       .exec();
 
@@ -44,15 +46,22 @@ export class CandidateAssessmentService {
     return await this.candidateAssessmentModel
       .findOne(condition)
       .select(excludeCandidateProps)
+      .populate('invitedBy')
+      .populate('candidate')
+      .populate('assessment')
       .exec();
   }
 
-  async create(createCandidateDto: CreateCandidateAssessmentDto | any): Promise<any> {
+  async create(
+    createCandidateDto: CreateCandidateAssessmentDto | any,
+  ): Promise<any> {
     return await this.candidateAssessmentModel.create(createCandidateDto);
   }
 
   async update(id: string, updateCandidateDto: any): Promise<any> {
-    await this.candidateAssessmentModel.findByIdAndUpdate(id, updateCandidateDto).exec();
+    await this.candidateAssessmentModel
+      .findByIdAndUpdate(id, updateCandidateDto)
+      .exec();
 
     return await this.findById(id);
   }
@@ -61,13 +70,17 @@ export class CandidateAssessmentService {
     condition: any,
     updateCandidateDto: any,
   ): Promise<any> {
-    await this.candidateAssessmentModel.updateOne(condition, updateCandidateDto).exec();
+    await this.candidateAssessmentModel
+      .updateOne(condition, updateCandidateDto)
+      .exec();
 
     return await this.findByCondition(condition);
   }
 
   async delete(id: string): Promise<void> {
-    const assessment = await this.candidateAssessmentModel.findByIdAndDelete(id);
+    const assessment = await this.candidateAssessmentModel.findByIdAndDelete(
+      id,
+    );
 
     if (!assessment) {
       throw new HttpException(
